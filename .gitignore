@@ -1,0 +1,9 @@
+*.lof
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.aux
+*.pdf
+*~
+/vc.tex
