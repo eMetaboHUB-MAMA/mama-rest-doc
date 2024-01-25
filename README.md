@@ -1,6 +1,6 @@
-![pipeline](https://services.pfem.clermont.inrae.fr/gitlab/metabohub/doc-mama_devs/badges/dev/pipeline.svg?job=pipeline)
-
 # Documentation - MAMA developers
+
+![pipeline](https://unh-pfem-gitlab.ara.inrae.fr/mth/doc-mama_devs/badges/dev/pipeline.svg?job=pipeline)
 
 ## Metadata
 
@@ -11,7 +11,7 @@
 
 ## Getting Started
 
-This project use [MetaboHUB's Latex template project](https://services.pfem.clermont.inrae.fr/gitlab/metabohub/mth_template).
+This project use [MetaboHUB's Latex template project](https://unh-pfem-gitlab.ara.inrae.fr/mth/mth_template).
 
 ### Prerequisites
 
@@ -29,8 +29,8 @@ sudo apt-get install \
 
 ## Versioning
 
-We use [GitLab](https://services.pfem.clermont.inrae.fr/gitlab/metabohub/doc-mama_devs) for versioning. 
-For the versions available, see the [tags on this repository](https://services.pfem.clermont.inrae.fr/gitlab/metabohub/doc-mama_devs/tags). 
+We use [GitLab](https://unh-pfem-gitlab.ara.inrae.fr/mth/doc-mama_devs) for versioning. 
+For the versions available, see the [tags on this repository](https://unh-pfem-gitlab.ara.inrae.fr/mth/doc-mama_devs/tags). 
 
 ## Authors
 
