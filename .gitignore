@@ -4,6 +4,7 @@
 *.synctex.gz
 *.toc
 *.aux
-*.pdf
+Spectral_Database_*.pdf
 *~
 /vc.tex
+PeakForest_*.pdf
