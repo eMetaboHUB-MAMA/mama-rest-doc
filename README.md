@@ -1,46 +1,51 @@
-Documentation - MetaboHUB
-=======
+![pipeline](https://services.pfem.clermont.inra.fr/gitlab/metabohub/doc-mama_devs/badges/dev/pipeline.svg?job=pipeline)
 
-Metadata
------------
+# Documentation - MAMA developers
 
- * **@name**: Documentation - MetaboHUB
- * **@version**: 0.1
- * **@authors**: Franck Giacomoni, Nils Paulhe
- * **@date creation**: 2014/02/21
- * **@main usage**: create PeakForest documentation (SRS / WebApp / WebServices)
+## Metadata
 
-Configuration
------------
-
-### Requirement:
- * pdflatex (`yum install tetex`), version 3.1415926-2.5-1.40.14 or later
-
-### Get project data:
- * get project data `git clone ssh://git@pfemw3.clermont.inra.fr:dev-team/peakforest-doc-scope_statement.git`
-
-### Generate PDF files:
- * complile all documents: `make all`
- * clean / delete all generated files: `make clean`
- * build "WebService REST guide" file: `make rest`
- * build "Peak Forest Install Guide" file: `make webapp`
- * build "Software Requirement Specification" file: `make srs`
-
-Services provided
------------
-
-none
+- authors: <nils.paulhe@inrae.fr>, <franck.giacomoni@inrae.fr>
+- creation date: `2014/02/21`
+- main usage: Documents for MAMA's developers 
 
 
-Technical description
------------
+## Getting Started
 
-none
+This project use [MetaboHUB's Latex template project](https://services.pfem.clermont.inra.fr/gitlab/metabohub/mth_template).
 
-Notes
------------
+### Prerequisites
 
-the `make` command create a file (`vc.tex`) used to includ the SHA1 commit ID in the generated PDF file.
+- Latex compiler
+- Git
+- Make
+- Docker (optional)
 
-********************************************************************************
+```
+sudo apt-get install \
+    texlive-full \
+    git \
+    make
+```
 
+## Versioning
+
+We use [GitLab](https://services.pfem.clermont.inra.fr/gitlab/metabohub/doc-mama_devs) for versioning. 
+For the versions available, see the [tags on this repository](https://services.pfem.clermont.inra.fr/gitlab/metabohub/doc-mama_devs/tags). 
+
+## Authors
+
+* **Nils Paulhe** - *Initial work* - 
+
+<!--
+See also the list of [contributors](https://services.pfem.clermont.inra.fr/gitlab/your/projectcontributors) who participated in this project.
+
+## License
+
+This project is licensed under the XXX License - see the [LICENSE.md](LICENSE.md) file for details
+
+## Acknowledgments
+
+* Hat tip to anyone whose code was used
+* Inspiration
+* etc
+-->

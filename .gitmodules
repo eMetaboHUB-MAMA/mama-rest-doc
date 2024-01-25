@@ -1,0 +1,3 @@
+[submodule "mth_template"]
+	path = mth_template
+	url = ../mth_template

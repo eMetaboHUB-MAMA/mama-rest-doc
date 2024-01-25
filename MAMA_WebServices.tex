@@ -1,0 +1,1398 @@
+% @author: MetaboHUB
+% @date: 2016/03/11
+% @note: this document is versioned through a GIT repository; sharing is caring
+
+\input{mth_template/blocks/header1.tex}
+
+% PATH FOR LOGO / IMAGES,
+\graphicspath{ {mth_template/logos/} }
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% metadata
+\usepackage{hyperref}
+\hypersetup{
+	pdftitle={MAMA - WebServices Guide},
+	pdfauthor={MetaboHUB - WP4},
+	colorlinks=true,
+	urlcolor=blue,
+	linkcolor=black,
+	citecolor=black,
+}
+
+\input{mth_template/blocks/header2.tex}
+\usepackage{footnote}
+\makesavenoteenv{tabular}
+\makesavenoteenv{table}
+\newcommand{\specialcell}[2][c]{%
+  \begin{tabular}[#1]{@{}c@{}}#2\end{tabular}}
+
+% version
+\input{vc.tex}
+\input{vr.tex}
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% title page
+\input{./files/tex/title_doc_ws_mama.tex}
+
+\input{mth_template/blocks/body.tex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% START
+
+%\section{Document History}
+%
+%\begin{itemize}
+%	\item 2014/02/20: v 0.1~: document template (init; main sections).
+%\end{itemize} 
+
+\section{Introduction}
+%\subsection{About}
+\hspace*{\parindent}
+As a part of the MetaboHUB project, 
+the WebService access to the MAMA service is integrated in the project's forth Workpackage. 
+It is possible for anyone to develop his own client component in order to call the WebService directly. 
+The WebServire base URL is:  \href{https://mama-rest.metabohub.fr/}{mama-rest.metabohub.fr}. 
+\newline
+
+\subsection{Project scope and users authorizations}
+\hspace*{\parindent}
+The MAMA service manage both users and projects. 
+Users may have different rights (user, project manager, admin);
+some method are only available for users with the correct grants 
+(\eg only administrators can promote a user with ``project manager'' or ``admin'' rights). 
+A ``project manager'' has the same rights as a ``user'' and an ``admin'' also has the ``project manager'' grants. 
+All method require an user token (expect of course ``POST /user'' and ``GET /token'' methods). %note: ``a user'' or ``an user''? grammar said ``an'' but it's sound better with ``a''
+The token must be send as GET parameter to each methods who require an authentication 
+(event for POST / PUT / DELETE requests) 
+like ``\&token=YOUR\_TOKEN\_VALUE''. 
+Tokens are destroy after 14 days. 
+Only one token per user is allowed: 
+if a new one is requested, the order one is destroyed. 
+\newline
+
+\subsection{REST standards and best practices}
+\hspace*{\parindent}
+As a standard REST webservice, a same web resource, identified by Uniform Resource Identifiers (URIs), 
+can be call with different HTTP verbs (GET, POST, PUT or DELETE); 
+\eg ``GET /user/\{id\}'' will show the user attributes, ``PUT /user/\{id\}'' will update the users informations and settings. 
+To view or edit a project, you must be the project owner or a ``project manager''. 
+MAMA check the security and authorization thank to the token management system.  
+\newline
+
+\hspace*{\parindent}
+The webservice can return different three formats: JSON and XML objects or just flat text. 
+You can set the webservice output format thanks ``Accept'' HTTP header or just add ``format=xxx'' GET parameter in your request 
+(event for POST / PUT / DELETE requests).
+\newline
+
+\hspace*{\parindent}
+Special note about LDAP login: if you use LDAP authentication you do not need to create an account with ``POST /user'' method. 
+Use ``POST /token'' method with your LDAP login / passwords. 
+
+%\hspace*{\parindent}
+%The academic institutions are allowed to use data for no-commercial works;~
+%private institutions may contact us first.
+%The whole WebService and its source code are freely available, 
+%thus allowing academic institutions to deploy it on their own network and adapt it to their specific needs.
+
+%\newline
+
+%All webservices requests examples are based on current MetaboHUB Spectral Database main portal.
+
+%\subsection{Definitions}
+%
+%\begin{itemize}
+%	\item WebService:.
+%\end{itemize}
+
+\section{Web Service REST Requests}
+\hspace*{\parindent}
+%All the following example are based on the main instance of the Spectral Database REST WebServices.
+%If you deploy your own instance of the Spectral Database, adapt the URL of the request.
+
+First you must create your account (see ``POST /user'' in section \ref{postUser} page \pageref{postUser}) then authenticate yourself (see ``POST /token'' in section \ref{postToken} page \pageref{postToken}).
+
+\subsection{``Anonymous'' rights}
+
+\subsubsection{get MAMA informations}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /} \\
+	\hline
+	action & get MAMA service basic informations (release date / version / ...) \\
+	\hline
+	output & MAMA informations (\texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & none. \\
+	\hline
+\end{tabular}
+\newline
+
+\subsubsection{Create a new user}
+\label{postUser}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{POST /user} \\
+	\hline
+	action & create a new user; sent a notification email. \\
+	\hline
+	mandatory POST parameters & ``email'' (used as login later, can not be changed) \\
+	\space & ``password'' \\
+	\hline
+	optional POST parameters & ``firstName'' \\
+	\space & ``lastName''  \\
+	\space & ``phoneGroup'' (int)\footnote{\cf: \url{https://countrycode.org/}} \\
+	\space & ``phoneNumber'' \\
+	\space & ``laboratoryOrCompagny'' \\
+	\space & ``workplaceAddress'' \\
+	\space & ``typeOfLaboratoryOrCompany'' \\
+	\space & ``lang'' (the language for the email sent, default value: ``en'') \\	
+	\hline
+	output & the ID of the new user or ``-1'' if error (\texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & an user with the same login already exist in the system. \\
+	\hline
+\end{tabular}
+\newline
+
+\subsubsection{Create a new Token}
+\label{postToken}
+Note: if the user already have a valid token, it will return it and extends his validity date. \\
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{POST /token} \\
+	\hline
+	action & create a new token; return this new token with his decrepit date. \\
+	\hline
+	mandatory POST parameters & ``login'' (your email or LDAP login) \\
+	\space & ``password'' \\
+	\hline
+	output & the new token with his decrepit date \\
+	\space & your account basic informations (\texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & wrong login / password combination. \\
+	\hline
+\end{tabular}
+\newline
+
+\subsubsection{Reset your password (only for none-LDAP users)}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{PUT /reset-password} \\
+	\hline
+	action & generate a new password for your account en send it \via email. \\
+	\hline
+	mandatory PUT parameters & ``login'' (your email) \\
+	\hline
+	optional  PUT parameters & ``lang'' (the language for the email sent, default value: ``en'') \\
+	\hline
+	output & ``true'' if the reset password email has been sent; \\
+	\space & ``false'' otherwise (boolean value, in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & wrong login (not in the system) / \\
+	\space & the system can not write an email to this address. \\
+	\hline
+\end{tabular}
+\newline
+
+%GET /keywords
+\subsubsection{Get the list of keywords}
+\hspace*{\parindent}
+These keywords are used when a user create or edit a project
+(you can associate up to three keywords per project).
+\newline
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /keywords} \\
+	\hline
+	action & list available keywords. \\
+	\hline
+	output & list of keywords and their ids \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & none. \\
+	\hline
+\end{tabular}
+\newline
+
+%GET /subkeywords
+\subsubsection{Get the list of sub-keywords}
+\hspace*{\parindent}
+These sub-keywords are used when a user create or edit a project
+(you can associate up to five sub-keywords per project).
+\newline
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /subkeywords} \\
+	\hline
+	action & list available sub-keywords. \\
+	\hline
+	output & list of sub-keywords and their ids \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & none. \\
+	\hline
+\end{tabular}
+\newline
+
+%GET /mth-platforms
+\subsubsection{Get the list of MetaboHUB's platforms}
+\hspace*{\parindent}
+These platform are used when a user create or edit a project.
+\newline
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /mth-platforms} \\
+	\hline
+	action & list available metaboHUB's platforms. \\
+	\hline
+	output & list of metaboHUB's platforms and their ids \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & none. \\
+	\hline
+\end{tabular}
+\newline
+
+\subsection{``User'' rights}
+
+%GET /user/\{id\}
+\subsubsection{Get a user informations}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /user/\{id\}} \\
+	\hline
+	action & get all informations about a user (identified \via user's \texttt{id}). \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	output & list all user's properties / settings.  \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user is not allowed to see requested user informations. \\
+	\space & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+%PUT /user/\{id\}
+\subsubsection{Edit user's informations}
+\label{putUsersInformations}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{PUT /user\{id\}} \\
+	\hline
+	action & edit a user informations. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	mandatory PUT parameters & ``firstName'' \\
+	\space & ``lastName''  \\
+	\space & ``phoneGroup'' (int)\footnote{\cf: \url{https://countrycode.org/}} \\
+	\space & ``phoneNumber'' \\
+	\space & ``laboratoryOrCompagny'' \\
+	\space & ``workplaceAddress'' \\
+	\space & ``typeOfLaboratoryOrCompany'' \\	
+	\space & ``emailNotification'' (must be ``true'' or ``false'') \\
+	\space & ``emailAlertNewUserAccount'' (must be ``true'' or ``false'' \footnote{only work if you are an ``admin''})) \\
+	\space & ``emailAlertNewProject'' (must be ``true'' or ``false'' \footnote{only work if you are a ``project manager'' / ``admin''}) \\
+	\space & ``emailAlertNewEventFollowedProject'' (must be ``true'' or ``false'' \footnote{only work if you are a ``project manager'' / ``admin''}) \\
+	\space & ``emailAlertNewMessage'' (must be ``true'' or ``false'') \\	
+	\hline
+	optional PUT parameters & ``password'' and ``old-password'' only if you want to update your password. \\
+	\space & ``lang'' (the language for the email sent, default value: ``en'') \\	
+	\hline
+	output & ``true'' if the user profile has been successfully updated; \\
+	\space & ``false'' otherwise (boolean value, in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+%GET /projects
+\subsubsection{Get / list projects}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /projects} \\
+	\hline
+	action & list all user's projects. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	optional GET parameter & ``userFilter'' add a filter (value: ``owner'' or ``inCharge'' or ``involved'') \\
+	\space & ``start'' list from this value (value: integer) \\
+	\space & ``limit'' number of result max to show (value: integer) \\
+	\space & ``from'' list from this date (format: \texttt{YYYY-MM-DD}) \\
+	\space & ``to'' list until this date (format: \texttt{YYYY-MM-DD}) \\
+	\space & ``to'' number of result max to show (value: integer) \\
+%	\space & ``deleted'' add a filter (value: ``true'' or ``false'') \\
+	\space & ``status'' filter only projects with this status \footnote{can be ``rejected'' or ``waiting'' or ``completed'' or ``accepted'' or ``assigned'' or ``running'' or ``blocked'' or ``archived''. } \\
+	\space & ``keywords'' search projects with title like this value (value: string) \\
+	\space & ``order'' sort projects by id ascending / descending (value: ``desc'' or ``asc'')  \\
+	\hline
+	output & list all user's projects.  \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} / \texttt{XLS} formats \footnote{the \texttt{XLS} format only works if it is send as GET parameter.}). \\
+	\hline
+	cause of failure & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+%GET /projects-stats
+\subsubsection{Count projects per status}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /projects-stats} \\
+	\hline
+	action & count all user's projects. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	optional GET parameter & ``userFilter'' add a filter (value: ``owner'' or ``inCharge'' or ``involved'') \\
+%	\space & ``deleted'' add a filter (value: ``true'' or ``false'') \\
+	\space & ``status'' filter only projects with this status \footnote{can be ``rejected'' or ``waiting'' or ``completed'' or ``accepted'' or ``assigned'' or ``running'' or ``blocked'' or ``archived''. } \\
+	\space & ``keywords'' search projects with title like this value (value: string) \\
+	\space & ``from'' count projects from this date (format: \texttt{YYYY-MM-DD}) \\
+	\space & ``to'' count projects until this date (format: \texttt{YYYY-MM-DD}) \\
+	\hline
+	output & list all user's projects.  \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+%GET /events
+\subsubsection{Get / list events}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /events} \\
+	\hline
+	action & list all user's projects. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	optional GET parameter & ``filter'' add a filter (value: ``users'' or ``projects'' or ``admin'') \footnote{filter type of events; ``admin only works for administrators.''} \\
+	\space & ``start'' list from this value (value: integer) \\
+	\space & ``limit'' number of result max to show (value: integer) \\
+	\space & ``from'' list events from this date (format: \texttt{YYYY-MM-DD}) \\
+	\space & ``to'' list events until this date (format: \texttt{YYYY-MM-DD}) \\
+%	\space & ``deleted'' add a filter (value: ``true'' or ``false'') \\
+	\space & ``order'' sort events by id ascending / descending (value: ``desc'' or ``asc'')  \\
+	\hline
+	output & list all user's events (projects + his profile).  \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+%GET /messages
+\subsubsection{Get / list messages}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /messages} \\
+	\hline
+	action & list all user's messages. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	optional GET parameter & ``projectID'' return only messages linked to this project \\
+	\space & ``userFilter'' return only messages send or received \\ 
+	\space & (value: ``sender'' or ``receiver'' (default)) \\
+	\space & ``projectFilter'' return only messages on project \\
+	\space & (value: ``owner'' (only value possible for users) or ``inCharge'' / \\
+	\space & ``involved'' (only project-manager / admin)) \\
+	\space & ``noUsers'' return only messages on projects \\ 
+	\space & (value: ``true'' or ``false'' (default)) \\
+	\space & ``start'' list from this value (value: integer) \\
+	\space & ``limit'' number of result max to show (value: integer) \\
+	\space & ``from'' list messages from this date (format: \texttt{YYYY-MM-DD}) \\
+	\space & ``to'' list messages until this date (format: \texttt{YYYY-MM-DD}) \\
+%	\space & ``deleted'' add a filter (value: ``true'' or ``false'') \\
+	\space & ``order'' sort events by id ascending / descending (value: ``desc'' or ``asc'')  \\
+	\hline
+	output & list all user's messages.  \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+%GET /appointments
+\subsubsection{Get / list appointments}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /appointments} \\
+	\hline
+	action & list all user's appointments. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	optional GET parameter & ``projectID'' return only appointments linked to this project \\
+	\space & ``userFilter'' return only appointments from or to you \\ 
+	\space & (value: ``from'' or ``to'' (default: all)) \\
+	\space & ``start'' list from this value (value: integer) \\
+	\space & ``limit'' number of result max to show (value: integer) \\
+	\space & ``filter'' fetch only past or ongoing appointments \\
+	\space & (value: ``ongoing'' or ``past'' (default: all)) \\
+%	\space & ``deleted'' add a filter (value: ``true'' or ``false'') \\
+	\space & ``order'' sort events by id ascending / descending (value: ``desc'' or ``asc'')  \\
+	\hline
+	output & list all user's appointments.  \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+%POST /project
+\subsubsection{Create a new project}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{POST /project} \\
+	\hline
+	action & create a new project. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	mandatory POST parameters & ``title'' (can not be edited later) \\
+	\space & ``interestInMthCollaboration'' free text \\		
+	\space & ``demandTypeEqProvisioning'' boolean value \\
+	\space & ``demandTypeCatalogAllowance'' boolean value \\
+	\space & ``demandTypeFeasibilityStudy'' boolean value \\
+	\space & ``demandTypeFormation'' boolean value \\
+%%	// $samplesNumber,
+	\space & ``samplesNumber'' number of sample \footnote{only relevant if ``demandTypeCatalogAllowance'' is ``true''; can be ``50 or fewer'' or ``51 to 100'' or ``101 to 500'' or ``more than 501'' } \\
+	\space & ``cloudWords'' list of integers, comma separated \footnote{each integer matching a keywords’s ID; see \texttt{GET /keywords} method}. \\
+	\space & ``mthPlatforms'' list of integers, comma separated \footnote{each integer matching an MTH platform’s ID; see \texttt{GET /mth-platforms} method}. \\
+	\space & ``copartner'' boolean value \\
+	\space & ``targeted'' boolean value \\
+	\hline
+	optional POST parameters & ``scientificContext'' free text \\	
+	\space & ``scientificContextFile'' string return by \texttt{POST /project-file} method. \\
+	\space & ``project\_financed'' boolean value  \\
+	\space & ``project\_inProvisioning'' boolean value \\
+	\space & ``project\_onOwnSupply'' boolean value \\
+	\space & ``project\_notFinanced'' boolean value \\
+%%	// financialContextBis: 
+	\space & ``project\_financedEU'' boolean value \footnote{only relevant if ``project\_financed'' or ``project\_inProvisioning'' is ``true'')} \\
+	\space & ``project\_financedANR'' boolean value \footnote{only relevant if ``project\_financed'' or ``project\_inProvisioning'' is ``true'')} \\
+	\space & ``project\_financedNational'' boolean value \footnote{only relevant if ``project\_financed'' or ``project\_inProvisioning'' is ``true'')} \\
+	\space & ``project\_financedRegional'' boolean value \footnote{only relevant if ``project\_financed'' or ``project\_inProvisioning'' is ``true'')} \\
+	\space & ``project\_financedCompanyTutorship'' boolean value \footnote{only relevant if ``project\_financed'' or ``project\_inProvisioning'' is ``true'')} \\
+	\space & ``project\_financedOther'' boolean value \footnote{only relevant if ``project\_financed'' or ``project\_inProvisioning'' is ``true'')} \\
+	\space & ``financialContextOther'' value: string \footnote{ignored if ``project\_financedOther'' is ``false''} \\
+	\hline
+	output & the ID of the new project, \\
+	\space & or ``-1'' if failure (\texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & missing mandatory information(s) \\
+	\space & the user token is deprecated. \\
+	\space & the user is blocked. \\
+	\hline
+\end{tabular}
+
+%POST /message
+\subsubsection{Create a new message}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{POST /message} \\
+	\hline
+	action & create a new message. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	mandatory POST parameters & ``message'' (can not be edited later) \\
+	\space & ``projectID'' id of a project \\		
+	\space & OR ``userID'' id of a user \\
+	\hline
+	output & the ID of the new message, \\
+	\space & or ``-1'' if failure (\texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & missing mandatory information(s); \\
+	\space & the user is not allowed to see / edit the project. \\
+	\space & the user token is deprecated. \\
+	\space & the user is blocked. \\
+	\hline
+\end{tabular}
+
+%POST /message
+\subsubsection{Create a new appointment}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{POST /appointment} \\
+	\hline
+	action & create a new appointment. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	mandatory POST parameters & ``message'' (can not be edited later) \\
+	\space & ``projectID'' id of a project \\		
+	\space & ``toUser'' id of a user to fix appointment \\
+	\space & ``dates'' appointment dates suggested \\
+	\space & (format: ``yyyy-mm-dd HH:MM'', comma separated) \\
+	\hline
+	output & the ID of the new appointment, \\
+	\space & or ``-1'' if failure (\texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & missing mandatory information(s);  \\
+	\space & the user is not allowed to see / edit the project. \\
+	\space & the user token is deprecated. \\
+	\space & the user is blocked. \\
+	\hline
+\end{tabular}
+
+%GET /project/\{id\}
+\subsubsection{Get a project informations}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /project/\{id\}} \\
+	\hline
+	action & get all informations about a project (identified \via project’s \texttt{id}). \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	output & list all project's properties.  \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user is not allowed to see requested informations. \\
+	\space & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+%GET /message/ID
+\subsubsection{Get a message informations}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /message/\{id\}} \\
+	\hline
+	action & get informations about a message (identified \via message’s \texttt{id}). \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	output & list all message's properties.  \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user is not allowed to see requested informations. \\
+	\space & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+%GET /appointment/ID
+\subsubsection{Get an appointment informations}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /appointment/\{id\}} \\
+	\hline
+	action & get informations about a appointment (identified \via appointment’s \texttt{id}). \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	output & list all appointment's properties.  \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user is not allowed to see requested informations. \\
+	\space & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+%PUT /project/\{id\}
+\subsubsection{Edit project's informations}
+\label{putprojects}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{PUT /project\{id\}} \\
+	\hline
+	action & edit a project (identified \via project's id). \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	optional PUT parameters & ``interestInMthCollaboration'' free text \\		
+	\space & ``demandTypeEqProvisioning'' boolean value \\
+	\space & ``demandTypeCatalogAllowance'' boolean value \\
+	\space & ``demandTypeFeasibilityStudy'' boolean value \\
+	\space & ``demandTypeFormation'' boolean value \\
+%%	// $samplesNumber,
+	\space & ``samplesNumber'' number of sample \footnote{only relevant if ``demandTypeCatalogAllowance'' is ``true''; can be ``50 or fewer'' or ``51 to 100'' or ``101 to 500'' or ``more than 501'' } \\
+	\space & ``cloudWords'' list of integers, comma separated \footnote{each integer matching a keywords’s ID; see \texttt{GET /keywords} method}. \\
+	\space & ``mthPlatforms'' list of integers, comma separated \footnote{each integer matching an MTH platform’s ID; see \texttt{GET /mth-platforms} method}. \\
+	\space & ``copartner'' boolean value \\
+	\space & ``targeted'' boolean value \\
+	\space & ``scientificContext'' free text \\	
+	\space & ``scientificContextFile'' string return by \texttt{POST /project-file} method. \\
+	\space & ``project\_financed'' boolean value  \\
+	\space & ``project\_inProvisioning'' boolean value \\
+	\space & ``project\_onOwnSupply'' boolean value \\
+	\space & ``project\_notFinanced'' boolean value \\
+%%	// financialContextBis: 
+	\space & ``project\_financedEU'' boolean value \footnote{only relevant if ``project\_financed'' or ``project\_inProvisioning'' is ``true'')} \\
+	\space & ``project\_financedANR'' boolean value \footnote{only relevant if ``project\_financed'' or ``project\_inProvisioning'' is ``true'')} \\
+	\space & ``project\_financedNational'' boolean value \footnote{only relevant if ``project\_financed'' or ``project\_inProvisioning'' is ``true'')} \\
+	\space & ``project\_financedRegional'' boolean value \footnote{only relevant if ``project\_financed'' or ``project\_inProvisioning'' is ``true'')} \\
+	\space & ``project\_financedCompanyTutorship'' boolean value \footnote{only relevant if ``project\_financed'' or ``project\_inProvisioning'' is ``true'')} \\
+	\space & ``project\_financedOther'' boolean value \footnote{only relevant if ``project\_financed'' or ``project\_inProvisioning'' is ``true'')} \\
+	\space & ``financialContextOther'' value: string \footnote{ignored if ``project\_financedOther'' is ``false''} \\
+	\hline
+	output & ``true'' if the project has been successfully updated; \\
+	\space & ``false'' otherwise (boolean value, in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure &the user is not allowed to edit thsi project \\
+	\space & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+%POST /project-file
+\subsubsection{Upload a ``scientific context'' file}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{POST /project-file} \\
+	\hline
+	action & upload a project's ``scientific context file''. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	mandatory POST parameter & ``file'' (the file to upload) \\
+	\hline
+	output & the success (``true'' or ``false'')  \\
+	\space & and the attached file's remote identifier \footnote{used in ``scientificContextFile'' field during POST or PUT /project}.  \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user is not allowed to see requested informations. \\
+	\space & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+%GET /project-file/\{id\}
+\subsubsection{Download a ``scientific context'' file}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /project-file/\{id\}} \\
+	\hline
+	action & download a project's ``scientific context file'' (identified \via project's \texttt{id}). \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	output & success: download the attached file; \\
+	\space & error: get cause of failure (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user is not allowed to see requested informations. \\
+	\space & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+%DELETE /project-file/\{id\}
+\subsubsection{Delete a ``scientific context'' file}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{DELETE /project-file/\{id\}} \\
+	\hline
+	action & delete a project's ``scientific context file'' (identified \via project's \texttt{id}). \\
+	\hline
+	mandatory DELETE parameter & ``token'' (value: user's token) \\
+	\hline
+	output & success: delete the attached file; \\
+	\space & error: get cause of failure (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user is not allowed to delete these informations. \\
+	\space & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+%DELETE /token[/\{token\}
+\subsubsection{Delete a user's token}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{DELETE /token/\{token\_value\}} \\
+	\hline
+	action & delete a token. \\
+	\hline
+	output & ``true'' if the token has been successfully deleted; \\
+	\space & ``false'' otherwise (boolean value, in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & token already deleted. \\
+	\hline
+\end{tabular}
+\newline
+
+\subsection{``Project manager'' rights}
+\hspace*{\parindent}
+A project manager gets all ``users'' basic rights, some with more options and special services.
+\newline
+
+\hspace*{\parindent}
+GET projects / GET projects-stats: get ALL projects
+\newline
+
+\subsubsection{Put Projects special options}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{PUT /project\{id\}} \\
+	\hline
+	action & edit a project (identified \via project's id). \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	optional PUT parameters & all fileds in ``Edit project’s informations'' (see \ref{putprojects} page \pageref{putprojects}) \\		
+	\space & ``status'' String value \footnote{can be ``rejected'' or ``waiting'' or ``completed'' or ``accepted'' or ``assigned'' or ``running'' or ``blocked'' or ``archived''. } \\
+	\space & ``analystInCharge'' ID of the projects manager (main) \\
+	\space & ``analystInCharge'' IDs of the projects managers, comma separated \\
+	\hline
+	extra data as PUT parameters & ``extra\_adminContext'' Free text \\
+	\space & ``extra\_geoContext'' Free text \\	
+	\space & ``extra\_projectMaturity'' Free text \\
+	\space & ``extra\_deadline'' Free text \\
+	\space & ``extra\_budget'' Free text \\
+	\space & ``extra\_userNeeds'' Free text \\
+	\space & ``extra\_laboType'' must be \texttt{private} or \texttt{public} or \texttt{privatepublic} \\
+	\space & ``extra\_hdykm\_friend'' \footnote{hdykm: How Did You Knew MetaboHUB} \texttt{true} or \texttt{false} \\
+	\space & ``extra\_hdykm\_publication'' \texttt{true} or \texttt{false} \\
+	\space & ``extra\_hdykm\_website'' \texttt{true} or \texttt{false} \\
+	\space & ``extra\_hdykm\_searchEngine'' \texttt{true} or \texttt{false} \\
+	\hline
+	output & ``true'' if the project has been successfully updated; \\
+	\space & ``false'' otherwise (boolean value, in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure &the user is not allowed to edit thsi project \\
+	\space & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+\subsubsection{Block or Pause a Project}
+%PUT 
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{PUT /stop-project\{id\}} \\
+	\hline
+	action & block or pause a project (identified \via project's id). \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	optional PUT parameters & ``blockedCase'' String value \footnote{can be ``waiting\_for\_samples'' or ``waiting\_for\_service\_user\_answer'' or ``waiting\_for\_provisioning''.} \\		
+	\space & ``rejectedCase'' String value \footnote{can be ``too\_expensive'' or ``too\_long\_delays'' or ``outside\_our\_skill\_sphere'' or ``non\_prioritary\_rad'' or ``incompatible\_deadline'' or ``too\_many\_samples'' or ``transfered\_to\_privilegied\_mth\_partner'' or ``not\_funded''.} \\
+	\space & ``stoppedReason'' Free text. \\
+	\hline
+	output & ``true'' if the project has been successfully updated; \\
+	\space & ``false'' otherwise (boolean value, in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure &the user is not allowed to edit thsi project \\
+	\space & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+% GET /projects-managers
+\subsubsection{List all ``project managers'' and ``admin''}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /projects-managers} \\
+	\hline
+	action & get all Projects Managers \footnote{and admins, because they are projects managers too!}. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	output & the list of MAMA's Projects Managers and Admins \\ 
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+\subsection{``Admin'' rights}
+
+%GET /users
+\subsubsection{Get / list users}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /users} \\
+	\hline
+	action & list users from the system. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	optional GET parameters & ``keyword'' return only users matching this value \footnote{either in ``firstname'', ``lastname'' or ``email''} \\
+	\space & ``start'' list from this value (value: integer) \\
+	\space & ``limit'' number of result max to show (value: integer) \\
+	\space & ``order'' can be ``ASC'' or `DESC`'' \\
+	\space &  ``status'' standardized String \footnote{must be ``blocked'' or ``user'' or ``project\_manager'' or ``admin''} \\		
+	\hline
+	output & ``true'' if the user rights has been successfully updated; \\
+	\space & ``false'' otherwise (boolean value, in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+%GET /users-stats
+\subsubsection{Count users per status / rights}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /users-stats} \\
+	\hline
+	action & count users per status / rights in the system. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	optional GET parameters & ``keyword'' return only users matching this value \footnote{either in ``firstname'', ``lastname'' or ``email''} \\	
+	\hline
+	output & ``true'' if the user rights has been successfully updated; \\
+	\space & ``false'' otherwise (boolean value, in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+%PUT /user-right/\{id\}
+\subsubsection{Edit user's rights}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{PUT /user-right/\{id\}} \\
+	\hline
+	action & edit a user rights. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	mandatory PUT parameter & ``statusRight'' standardized String \footnote{must be ``blocked'' or ``user'' or ``project\_manager'' or ``admin''} \\		
+	\hline
+	output & ``true'' if the user rights has been successfully updated; \\
+	\space & ``false'' otherwise (boolean value, in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+%GET /server-load
+\subsubsection{Get sever load}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /server-load} \\
+	\hline
+	action & get informations about server (load, memory, ...). \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	output & list server load properties.  \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user is not allowed to see requested informations. \\
+	\space & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+%POST /keyword
+\subsubsection{Create a new keyword}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{POST /keyword} \\
+	\hline
+	action & create a new keyword. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	mandatory POST parameter & ``keyword'' (value: name of the new keyword) \\
+	\hline
+	output & the success (``true'' or ``false'')  \\
+	\space & the id of the new keyword.  \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user is not allowed to see requested informations. \\
+	\space & the user token is deprecated / this keyword already exists. \\
+	\hline
+\end{tabular}
+\newline
+
+\subsubsection{Create a new sub-keyword}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{POST /subkeyword} \\
+	\hline
+	action & create a new sub-keyword. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	mandatory POST parameter & ``keyword'' (value: name of the new sub-keyword) \\
+	\hline
+	output & the success (``true'' or ``false'')  \\
+	\space & the id of the new sub-keyword.  \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user is not allowed to see requested informations. \\
+	\space & the user token is deprecated / this sub-keyword already exists. \\
+	\hline
+\end{tabular}
+\newline
+
+%PUT /keyword/1
+\subsubsection{Edit a keyword}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{PUT /keyword/\{id\}} \\
+	\hline
+	action & update a keyword (identified \via its \texttt{id}). \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	optional PUT parameters & ``keyword'' (value: new name for the keyword) \\
+	\space & ``deleted'' (value: TRUE or FALSE) \\
+	\hline
+	output & the success (``true'' or ``false'')  \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user is not allowed to see requested informations. \\
+	\space & the user token is deprecated / this keyword already exists. \\
+	\hline
+\end{tabular}
+\newline
+
+\subsubsection{Edit a sub-keyword}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{PUT /subkeyword/\{id\}} \\
+	\hline
+	action & update a sub-keyword (identified \via its \texttt{id}). \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	optional PUT parameters & ``keyword'' (value: new name for the sub-keyword) \\
+	\space & ``deleted'' (value: TRUE or FALSE) \\
+	\hline
+	output & the success (``true'' or ``false'')  \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user is not allowed to see requested informations. \\
+	\space & the user token is deprecated / this sub-keyword already exists. \\
+	\hline
+\end{tabular}
+\newline
+
+%POST /mth-platform
+\subsubsection{Create a new MetaboHUB's platform}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{POST /mth-platform} \\
+	\hline
+	action & create a new MetaboHUB's platform. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	mandatory POST parameter & ``mthPlatform'' (value: name of the new MetaboHUB's platform) \\
+	\hline
+	output & the success (``true'' or ``false'')  \\
+	\space & the id of the new MetaboHUB's platform.  \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user is not allowed to see requested informations. \\
+	\space & the user token is deprecated \\
+	\space & this MetaboHUB's platform name already exists. \\
+	\hline
+\end{tabular}
+\newline
+
+%PUT /mth-platform
+\subsubsection{Edit a MetaboHUB's platform}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{PUT /mth-platform\{id\}} \\
+	\hline
+	action & edite a MetaboHUB's platform (identified \via its \texttt{id}). \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	optional POST parameter & ``mthPlatform'' (value: new name of the new MetaboHUB's platform) \\
+	\hline
+	output & the success (``true'' or ``false'')  \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user is not allowed to see requested informations. \\
+	\space & the user token is deprecated \\
+	\space & this MetaboHUB's platform name already exists. \\
+	\hline
+\end{tabular}
+\newline
+
+\subsubsection{Get XLS file with all statistics}
+\hspace*{\parindent}
+This method require ``\texttt{xls}'' for ``\texttt{format}'' Get parameter or ``\texttt{application/xls}'' as value for ``\texttt{Accept}'' HTTP Header.
+\\~\\
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /server-load} \\
+	\hline
+	action & get many stastistics informations about MAMA's projects and users. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	output & The XLS file itself! \\
+	\hline
+	cause of failure & the user is not allowed to see requested informations. \\
+	\space & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+\subsubsection{Get a specific Project statistic}
+\hspace*{\parindent}
+Count all projects matching the filters
+\\~\\
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /projects-statistics} \\
+	\hline
+	action & get a specific project statistic. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	optional GET parameters & ``from'' (filter only projects with a creation date after this value) \\
+	\space & ``to'' (filter only projects with a creation date before this value) \\
+	\space & ``isStatus'' filter only projects with this status \\
+	\space & ~~(can take one of the standardized values \footnote{``rejected'' or ``waiting'' or ``completed'' or ``accepted'' or ``assigned'' or ``running'' or ``blocked'' or ``archived''}) \\
+	\space & ``isNotStatus'' filter only projects with not this status \\
+	\space & ``isPlatForm'' filter only projects link to this MTH's platform \footnote{identified by its ID} \\
+	\space & ``isNotPlatForm'' filter only projects NOT link to this MTH's platform  \\
+	\space & ``isKeyword'' filter only projects link to this keyword \footnote{identified by its ID} \\
+	\space & ``isNotKeyword'' filter only projects NOT link to this keyword \\
+	\space & ``isType'' filter only project with this ``type'' value \\
+	\space & ~~(can take the values ``eq\_prov'', ``cat\_allo'', ... \\
+	\space & ~~separtate values by commas) \\
+	\space & ``isNotType'' filter only project with NOT this ``type'' value \\
+	\space & ``isFinanced'' filter only project with this ``financed'' value \\
+	\space & ~~(can take the values ``financed eq\_prov'', ``provisioning'', ...) \\
+	\space & ``isNotFinanced'' filter only project with NOT this ``financed'' value \\
+	\space & ``isOwner'' filter only project with this ``owner'' ID(s) \\	
+	\space & ~~(values separtate values by commas) \\	
+	\space & ``isNotOwner'' filter only project with NOT this ``owner'' ID(s) \\	
+	\space & ~~(values separtate values by commas) \\	
+	\space & ``group'' choose a value to group your count; possible values:  \\
+	\space & ~~ ``status'', ``sample\_number'', ``mthPF'', ``keywords'', ``subkeywords'', \\
+	\space & ~~ ``type'', ``targeted'', ``copartner'', ``financial'' \\
+	\hline
+	output & the value(s) of the requested statistic \\
+	\space & as \texttt{JSON} / \texttt{XML} / \texttt{text} formats \\
+	\hline
+	cause of failure & the user is not allowed to see requested informations. \\
+	\space & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+\subsubsection{Get a specific Project Extra statistic}
+\hspace*{\parindent}
+Count all projects matching the filters
+\\~\\
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /extra-data-statistics} \\
+	\hline
+	action & get a specific project statistic. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	optional GET parameters & ``from'' (filter only projects with a creation date after this value) \\
+	\space & ``to'' (filter only projects with a creation date before this value) \\
+	\space & ``isProjectLaboType'' filter only projects with this lab. value \\
+	\space & ~~(can take one of the following values: ``public'', ``private'', ``public\_private'') \\
+	\space & ``isNotProjectLaboType'' filter only projects with NOT this lab. value \\
+	\space & ``group'' choose a value to group your count \\
+	\space & ~~(possible value: ``laboratory'') \\
+	\hline
+	output & the value(s) of the requested statistic \\
+	\space & as \texttt{JSON} / \texttt{XML} / \texttt{text} formats \\
+	\hline
+	cause of failure & the user is not allowed to see requested informations. \\
+	\space & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+\subsubsection{Get a specific User statistic}
+\hspace*{\parindent}
+Count all users matching the filters
+\\~\\
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /users-statistics} \\
+	\hline
+	action & get a specific user statistic. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	optional GET parameters & ``from'' (filter only users with a creation date after this value) \\
+	\space & ``to'' (filter only users with a creation date before this value) \\
+	\space & ``isUserLaboType'' filter only users with this lab. value \\
+	\space & ~~(can take one of the following values: ``public'', ``private'', ``public\_private'') \\
+	\space & ``isNotUserLaboType'' filter only users with NOT this lab. value \\
+	\space & ``group'' choose a value to group your count \\
+	\space & ~~(possible value: ``laboratory'') \\
+	\hline
+	output & the value(s) of the requested statistic \\
+	\space & as \texttt{JSON} / \texttt{XML} / \texttt{text} formats \\
+	\hline
+	cause of failure & the user is not allowed to see requested informations. \\
+	\space & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+\subsubsection{Clean unused uploaded files}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{PUT /admin/clean-uploaded-files} \\
+	\hline
+	action & clean unused uploaded files. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	output & the success (``true'' or ``false'') \\
+	\space & the number of deleted files \\
+	\space & as \texttt{JSON} / \texttt{XML} / \texttt{text} formats \\
+	\hline
+	cause of failure & the user is not allowed run the method. \\
+	\space & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+\subsubsection{Flag users as inactive}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{PUT /admin/inactive-users} \\
+	\hline
+	action & flag user without recent activity as ``inactive''. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	mandatory PUT parameter & ``nbWeeks'' (value: the number of weeks threshold) \\
+	\hline
+	output & the success (``true'' or ``false'') \\
+	\space & the number of inactivated users \\
+	\space & as \texttt{JSON} / \texttt{XML} / \texttt{text} formats \\
+	\hline
+	cause of failure & the user is not allowed run the method. \\
+	\space & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+\subsubsection{Clean old tokens}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{PUT /admin/clean-tokens} \\
+	\hline
+	action & clean old tokens. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	mandatory PUT parameter & ``nbHours'' (value: the number of hours threshold) \\
+	\hline
+	output & the success (``true'' or ``false'', \texttt{JSON} / \texttt{XML} / \texttt{text} formats) \\
+	\hline
+	cause of failure & the user is not allowed run the method. \\
+	\space & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+\subsubsection{Archive old projects}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{PUT /admin/archive-projects} \\
+	\hline
+	action & archive old projects. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	mandatory PUT parameter & ``nbYears'' (value: the number of years threshold) \\
+	\hline
+	output & the success (``true'' or ``false'', \texttt{JSON} / \texttt{XML} / \texttt{text} formats) \\
+	\hline
+	cause of failure & the user is not allowed run the method. \\
+	\space & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+\subsubsection{Show log file}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /admin/show-logs/\{file\}} \\
+	\hline
+	action & get a LOG file. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	mandatory URI parameter & ``file'' (value: the log file name; either \\
+	\space & ~~ ``weekly-mailler'', ``daily-mailler'' or ``monthly-users\_inactiver'') \\
+	\hline
+	optional GET parameter & ``from'' (value: the line to start) \\
+	\space & ``to'' (value: the line to end) \\
+	\hline
+	output & the success (``true'' or ``false'', \texttt{JSON} / \texttt{XML} / \texttt{text} formats) \\
+	\hline
+	cause of failure & the user is not allowed run the method. \\
+	\space & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+\section{Web Service Client Examples}
+
+\subsection{Java}
+\hspace*{\parindent}
+In the following example we use \href{https://code.google.com/p/json-simple/}{json-simple} library to parse JSON object. 
+Feel free to use your favorite one!
+
+\begin{lstlisting}[language=customJava,caption={Java request}]
+package fr.metabohub.demo;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URL;
+import java.nio.charset.Charset;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+public class WebServiceClient {
+
+	public static void main(String[] args) throws IOException, JSONException {
+		JSONObject json = doGetJson("https://mama-rest.metabohub.fr/?format=json");
+		System.out.println(json.toString());
+	}
+
+	public static JSONObject doGetJson(String url) throws IOException, JSONException {
+		InputStream is = new URL(url).openStream();
+		try {
+			BufferedReader rd = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
+			return new JSONObject(readBuffer(rd));
+		} finally {
+			is.close();
+		}
+	}
+
+	private static String readBuffer(Reader rd) throws IOException {
+		StringBuilder sb = new StringBuilder();
+		int i;
+		while ((i = rd.read()) != -1)
+			sb.append((char) i);
+		return sb.toString();
+	}
+	
+}
+\end{lstlisting}
+
+\subsection{PHP}
+\hspace*{\parindent}
+Do not forget to check if the library \texttt{allow\_url\_fopen} is enabled in your configuration and if ``php-curl'' is installed on your system! 
+\begin{lstlisting}[language=customPHP,caption={PHP request}]
+<?php
+
+// init
+set_time_limit(0);
+header("Content-Type: application/json; charset=UTF-8");
+
+// call WebService
+$json = file_get_contents('https://mama-rest.metabohub.fr/?format=json');
+
+// do whatever you want
+$obj = json_decode($json);
+var_dump( $obj->mama );
+
+?>
+\end{lstlisting}
+
+\subsection{Perl}
+\hspace*{\parindent}
+In this demo we do not parse the JSON result; 
+Feel free to use your favourite library!
+\begin{lstlisting}[language=customPerl,caption={Perl request}]
+#!/usr/bin/perl
+use strict;
+use warnings;
+use LWP::UserAgent;
+
+# init
+my $ws_url = "https://mama-rest.metabohub.fr";
+my $format = "json";
+my $rest_client = LWP::UserAgent->new;
+
+# run
+my $ws_query = $ws_url;
+my $result = $rest_client->get($ws_query, ["format" => $format]);
+
+# fail: print error code
+if ( not $result->is_success) {
+  print $result->status_line, "\n";
+}
+
+# success: print raw json
+print $result->mama;
+
+# end
+exit 0;
+\end{lstlisting}
+
+\subsection{R-base}
+\hspace*{\parindent}
+This demo use \href{http://cran.r-project.org/web/packages/RCurl/index.html}{RCurl} library. 
+We do not parse the JSON result so feel free to use your favourite library!
+\begin{lstlisting}[language=customR,caption={R-base request}]
+#!/usr/local/public/bin/Rscript --vanilla --slave --no-site-file
+
+# load lib
+library(RCurl)
+
+# call WS
+jsonData <- getForm("https://mama-rest.metabohub.fr", .params = c(format='json'))
+
+# print
+jsonData
+\end{lstlisting}
+\section{More} % mayo
+
+% \subsection{MetaboHUB downloads}
+
+\subsection{License}
+\hspace*{\parindent}
+This document and the code samples are under a \href{http://creativecommons.org/licenses/by-sa/4.0/}{Creative Commons License ``Attribution-ShareAlike 4.0 International'' (CC BY-SA 4.0)}. 
+For more information please visit the \href{http://creativecommons.org/}{creative commons} website.
+Sharing is caring! 
+
+%\subsection{Disclaimer of Warranty}
+%\hspace*{\parindent}
+%TODO
+
+\subsection{Contact}
+\hspace*{\parindent}
+To report a bug or ask for a new / specific method please contact us \via \href{mailto:contact-mama@metabohub.fr?subject=\%5BWebservice-REST\%20Issue\%5D}{contact-mama@metabohub.fr}. 
+% NEED tickets management system
+For generic questions about the MAMA service you can send use an email \via \href{mailto:contact-mama@metabohub.fr?subject=\%5BWebservice-REST\%5D}{contact-mama@metabohub.fr}. 
+
+%\newpage
+\newpage
+
+%%% bibliographie %%%
+
+%\bibliographystyle{unsrt}
+%\bibliography{files/biblio}
+
+\end{document}

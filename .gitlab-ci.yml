@@ -1,0 +1,69 @@
+# cache
+cache:
+  paths:
+    - documents/
+    - ./*.pdf
+
+# build env.
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  
+# before script
+before_script:
+  - mkdir -p $CI_PROJECT_DIR/documents
+
+# stages
+stages:
+  - check_docker_image
+  - build_documents
+  - artifacts
+
+# check docker image 
+job-check_docker_image:
+  stage: check_docker_image
+  tags:
+    - bash   
+  script:
+    - docker inspect --type=image metabohub/latex-make || docker build -f mth_template/Dockerfile -t metabohub/latex-make .
+
+# build latex documents
+job-build_demo:
+  stage: build_documents
+  tags:
+    - docker
+  image: metabohub/latex-make
+  before_script:
+    - make clean
+  script:
+    - make
+
+# build artifact for dev. branches
+documents-dev:
+  stage: artifacts
+  tags:
+    - docker
+  image: metabohub/latex-make
+  script:
+    - cp $CI_PROJECT_DIR/*.pdf  $CI_PROJECT_DIR/documents/
+  except:
+    - tags
+  artifacts:
+    name: documentation-$CI_COMMIT_REF_NAME
+    expire_in: 1 day
+    paths:
+        - $CI_PROJECT_DIR/documents
+
+# build artifact for stables releases
+documents-master:
+  stage: artifacts
+  tags:
+    - docker
+  image: metabohub/latex-make
+  script:
+    - cp $CI_PROJECT_DIR/*.pdf  $CI_PROJECT_DIR/documents/
+  only:
+    - tags
+  artifacts:
+    name: documentation-$CI_COMMIT_REF_NAME
+    paths:
+        - $CI_PROJECT_DIR/documents

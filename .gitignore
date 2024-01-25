@@ -1,3 +1,4 @@
+# generic latex
 *.lof
 *.log
 *.out
@@ -7,4 +8,6 @@
 Spectral_Database_*.pdf
 *~
 /vc.tex
-PeakForest_*.pdf
+
+# spec.
+MAMA_*.pdf
