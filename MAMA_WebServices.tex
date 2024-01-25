@@ -487,6 +487,7 @@ These platform are used when a user create or edit a project.
 	\space & ``project\_financedCompanyTutorship'' boolean value \footnote{only relevant if ``project\_financed'' or ``project\_inProvisioning'' is ``true'')} \\
 	\space & ``project\_financedOther'' boolean value \footnote{only relevant if ``project\_financed'' or ``project\_inProvisioning'' is ``true'')} \\
 	\space & ``financialContextOther'' value: string \footnote{ignored if ``project\_financedOther'' is ``false''} \\
+	\space & ``labRNSR'' value: string \footnote{Only for French public laboratories; refer to the \href{https://www.data.gouv.fr/fr/datasets/repertoire-national-des-structures-de-recherche-rnsr/}{official list}} \\
 	\hline
 	output & the ID of the new project, \\
 	\space & or ``-1'' if failure (\texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
@@ -508,7 +509,7 @@ These platform are used when a user create or edit a project.
 	mandatory GET parameter & ``token'' (value: user's token) \\
 	\hline
 	mandatory POST parameters & ``message'' (can not be edited later) \\
-	\space & ``projectID'' id of a project \\		
+	\space & ``projectID'' id of a project \\
 	\space & OR ``userID'' id of a user \\
 	\hline
 	output & the ID of the new message, \\
@@ -640,6 +641,7 @@ These platform are used when a user create or edit a project.
 	\space & ``project\_financedCompanyTutorship'' boolean value \footnote{only relevant if ``project\_financed'' or ``project\_inProvisioning'' is ``true'')} \\
 	\space & ``project\_financedOther'' boolean value \footnote{only relevant if ``project\_financed'' or ``project\_inProvisioning'' is ``true'')} \\
 	\space & ``financialContextOther'' value: string \footnote{ignored if ``project\_financedOther'' is ``false''} \\
+	\space & ``labRNSR'' value: string \footnote{Only for French public laboratories; refer to the \href{https://www.data.gouv.fr/fr/datasets/repertoire-national-des-structures-de-recherche-rnsr/}{official list}} \\
 	\hline
 	output & ``true'' if the project has been successfully updated; \\
 	\space & ``false'' otherwise (boolean value, in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
@@ -738,7 +740,7 @@ GET projects / GET projects-stats: get ALL projects
 \subsubsection{Put Projects special options}
 \begin{tabular}{ | l | l | }
 	\hline
-	HTTP verb and URI & \texttt{PUT /project\{id\}} \\
+	HTTP verb and URI & \texttt{PUT /project/\{id\}} \\
 	\hline
 	action & edit a project (identified \via project's id). \\
 	\hline
@@ -750,7 +752,8 @@ GET projects / GET projects-stats: get ALL projects
 	\space & ``analystInCharge'' IDs of the projects managers, comma separated \\
 	\hline
 	extra data as PUT parameters & ``extra\_adminContext'' Free text \\
-	\space & ``extra\_geoContext'' Free text \\	
+	\space & ``extra\_managerContext'' Free text \\
+	\space & ``extra\_geoContext'' Free text \\
 	\space & ``extra\_projectMaturity'' Free text \\
 	\space & ``extra\_deadline'' Free text \\
 	\space & ``extra\_budget'' Free text \\
@@ -760,6 +763,13 @@ GET projects / GET projects-stats: get ALL projects
 	\space & ``extra\_hdykm\_publication'' \texttt{true} or \texttt{false} \\
 	\space & ``extra\_hdykm\_website'' \texttt{true} or \texttt{false} \\
 	\space & ``extra\_hdykm\_searchEngine'' \texttt{true} or \texttt{false} \\
+	\space & ``extra\_hdykm\_formalUser'' \texttt{true} or \texttt{false} \\
+	% mama#66
+	\space & ``extra\_managerThematicWords'' list of integers, comma separated \footnote{each integer matching a keywords’s ID; see \texttt{GET /managerkeywords} method}. \\
+	% mama#68
+	\space & ``extra\_extManagerId'' Free text \\
+	% mama#65
+	\space & ``extra\_mthSubPlatforms'' list of integers, comma separated \footnote{each integer matching an MTH sub-platform’s ID; see \texttt{GET /mth-sub-platforms} method}. \\
 	\hline
 	output & ``true'' if the project has been successfully updated; \\
 	\space & ``false'' otherwise (boolean value, in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
@@ -807,6 +817,26 @@ GET projects / GET projects-stats: get ALL projects
 	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
 	\hline
 	cause of failure & the user token is deprecated. \\
+	\hline
+\end{tabular}
+\newline
+
+% mama#65
+%GET /mth-sub-platforms
+\subsubsection{Get the list of MetaboHUB's sub-platforms}
+\hspace*{\parindent}
+These platform are used when a user create or edit a project.
+\newline
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /mth-sub-platforms} \\
+	\hline
+	action & list available metaboHUB's sub-platforms (sub-sites). \\
+	\hline
+	output & list of metaboHUB's sub-platforms and their ids \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & none. \\
 	\hline
 \end{tabular}
 \newline
@@ -896,6 +926,26 @@ GET projects / GET projects-stats: get ALL projects
 \end{tabular}
 \newline
 
+%GET /managerkeywords
+\subsubsection{Get the list of manager-keywords}
+\hspace*{\parindent}
+These manager-keywords are used when a user create or edit a project
+(you can associate up to five manager-keywords per project).
+\newline
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{GET /managerkeywords} \\
+	\hline
+	action & list available manager-keywords. \\
+	\hline
+	output & list of manager-keywords and their ids \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & none. \\
+	\hline
+\end{tabular}
+\newline
+
 %POST /keyword
 \subsubsection{Create a new keyword}
 \begin{tabular}{ | l | l | }
@@ -918,6 +968,7 @@ GET projects / GET projects-stats: get ALL projects
 \end{tabular}
 \newline
 
+%POST /subkeyword
 \subsubsection{Create a new sub-keyword}
 \begin{tabular}{ | l | l | }
 	\hline
@@ -935,6 +986,28 @@ GET projects / GET projects-stats: get ALL projects
 	\hline
 	cause of failure & the user is not allowed to see requested informations. \\
 	\space & the user token is deprecated / this sub-keyword already exists. \\
+	\hline
+\end{tabular}
+\newline
+
+%POST /managerkeyword
+\subsubsection{Create a new manager-keyword}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{POST /managerkeyword} \\
+	\hline
+	action & create a new manager-keyword. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	mandatory POST parameter & ``keyword'' (value: name of the new manager-keyword) \\
+	\hline
+	output & the success (``true'' or ``false'')  \\
+	\space & the id of the new manager-keyword.  \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user is not allowed to see requested informations. \\
+	\space & the user token is deprecated / this manager-keyword already exists. \\
 	\hline
 \end{tabular}
 \newline
@@ -961,6 +1034,7 @@ GET projects / GET projects-stats: get ALL projects
 \end{tabular}
 \newline
 
+%PUT /subkeyword/1
 \subsubsection{Edit a sub-keyword}
 \begin{tabular}{ | l | l | }
 	\hline
@@ -978,6 +1052,28 @@ GET projects / GET projects-stats: get ALL projects
 	\hline
 	cause of failure & the user is not allowed to see requested informations. \\
 	\space & the user token is deprecated / this sub-keyword already exists. \\
+	\hline
+\end{tabular}
+\newline
+
+%PUT /managerkeyword/1
+\subsubsection{Edit a manager-keyword}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{PUT /managerkeyword/\{id\}} \\
+	\hline
+	action & update a manager-keyword (identified \via its \texttt{id}). \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	optional PUT parameters & ``keyword'' (value: new name for the manager-keyword) \\
+	\space & ``deleted'' (value: TRUE or FALSE) \\
+	\hline
+	output & the success (``true'' or ``false'')  \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user is not allowed to see requested informations. \\
+	\space & the user token is deprecated / this manager-keyword already exists. \\
 	\hline
 \end{tabular}
 \newline
@@ -1023,6 +1119,53 @@ GET projects / GET projects-stats: get ALL projects
 	cause of failure & the user is not allowed to see requested informations. \\
 	\space & the user token is deprecated \\
 	\space & this MetaboHUB's platform name already exists. \\
+	\hline
+\end{tabular}
+\newline
+
+% mama#65
+%POST /mth-sub-platform
+\subsubsection{Create a new MetaboHUB's sub-platform}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{POST /mth-sub-platform} \\
+	\hline
+	action & create a new MetaboHUB's sub-platform. \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	mandatory POST parameter & ``mthSubPlatform'' (value: name of the new MetaboHUB's sub-platform) \\
+	\hline
+	output & the success (``true'' or ``false'')  \\
+	\space & the id of the new MetaboHUB's sub-platform.  \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user is not allowed to see requested informations. \\
+	\space & the user token is deprecated \\
+	\space & this MetaboHUB's sub-platform name already exists. \\
+	\hline
+\end{tabular}
+\newline
+
+% mama#65
+%PUT /mth-sub-platform
+\subsubsection{Edit a MetaboHUB's sub-platform}
+\begin{tabular}{ | l | l | }
+	\hline
+	HTTP verb and URI & \texttt{PUT /mth-sub-platform\{id\}} \\
+	\hline
+	action & edite a MetaboHUB's sub-platform (identified \via its \texttt{id}). \\
+	\hline
+	mandatory GET parameter & ``token'' (value: user's token) \\
+	\hline
+	optional POST parameter & ``mthSubPlatform'' (value: new name of the new MetaboHUB's sub-platform) \\
+	\hline
+	output & the success (``true'' or ``false'')  \\
+	\space & (in \texttt{JSON} / \texttt{XML} / \texttt{text} formats). \\
+	\hline
+	cause of failure & the user is not allowed to see requested informations. \\
+	\space & the user token is deprecated \\
+	\space & this MetaboHUB's sub-platform name already exists. \\
 	\hline
 \end{tabular}
 \newline
@@ -1109,7 +1252,12 @@ Count all projects matching the filters
 	\space & ``isProjectLaboType'' filter only projects with this lab. value \\
 	\space & ~~(can take one of the following values: ``public'', ``private'', ``public\_private'') \\
 	\space & ``isNotProjectLaboType'' filter only projects with NOT this lab. value \\
-	\space & ``group'' choose a value to group your count \\
+    \space & ``isPlatForm'' filter only users who created at least one project assigned to this \\
+    \space & platform ID \\
+	\space & ~~(if more than one ID is set, use an AND logical connector) \\
+	\space & ``isNotPlatForm'' filter only users who did NOT created any project assigned to \\
+	\space & this platform ID \\
+	\space & ``group'' choose a value to group your count \\% TODO mama#66?
 	\space & ~~(possible value: ``laboratory'') \\
 	\hline
 	output & the value(s) of the requested statistic \\
@@ -1138,6 +1286,11 @@ Count all users matching the filters
 	\space & ``isUserLaboType'' filter only users with this lab. value \\
 	\space & ~~(can take one of the following values: ``public'', ``private'', ``public\_private'') \\
 	\space & ``isNotUserLaboType'' filter only users with NOT this lab. value \\
+    \space & ``isPlatForm'' filter only users who created at least one project assigned to this \\
+    \space & platform ID \\
+	\space & ~~(if more than one ID is set, use an AND logical connector) \\
+	\space & ``isNotPlatForm'' filter only users who did NOT created any project assigned to \\
+	\space & this platform ID \\
 	\space & ``group'' choose a value to group your count \\
 	\space & ~~(possible value: ``laboratory'') \\
 	\hline
